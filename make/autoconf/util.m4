@@ -24,7 +24,6 @@
 #
 
 m4_include([util_paths.m4])
-m4_include([util_windows.m4])
 
 ###############################################################################
 # Create a function/macro that takes a series of named arguments. The call is
@@ -229,150 +228,144 @@ AC_DEFUN([UTIL_ALIASED_ARG_ENABLE],
 ])
 
 ###############################################################################
-# Test that variable $1 denoting a program is not empty. If empty, exit with an error.
-# $1: variable to check
-AC_DEFUN([UTIL_CHECK_NONEMPTY],
+# Creates a command-line option using the --enable-* pattern. Will return a
+# value of 'true' or 'false' in the RESULT variable, depending on whether the
+# option was enabled or not by the user. The option can not be turned on if it
+# is not available, as specified by AVAILABLE and/or AVAILABLE_CHECK.
+#
+# Arguments:
+#   NAME: The base name of this option (i.e. what follows --enable-). Required.
+#   RESULT: The name of the variable to set to the result. Defaults to
+#     <NAME in uppercase>_RESULT.
+#   DEFAULT: The default value for this option. Can be true, false or auto.
+#     Defaults to true.
+#   AVAILABLE: If true, this option is allowed to be selected. Defaults to true.
+#   DESC: A description of this option. Defaults to a generic and unhelpful
+#     string.
+#   DEFAULT_DESC: A message describing the default value, for the help. Defaults
+#     to the literal value of DEFAULT.
+#   CHECKING_MSG: The message to present to user when checking this option.
+#     Defaults to a generic message.
+#   CHECK_AVAILABLE: An optional code block to execute to determine if the
+#     option should be available. Must set AVAILABLE to 'false' if not.
+#   IF_GIVEN:  An optional code block to execute if the option was given on the
+#     command line (regardless of the value).
+#   IF_NOT_GIVEN:  An optional code block to execute if the option was not given
+#     on the command line (regardless of the value).
+#   IF_ENABLED:  An optional code block to execute if the option is turned on.
+#   IF_DISABLED:  An optional code block to execute if the option is turned off.
+#
+UTIL_DEFUN_NAMED([UTIL_ARG_ENABLE],
+    [*NAME RESULT DEFAULT AVAILABLE DESC DEFAULT_DESC CHECKING_MSG
+    CHECK_AVAILABLE IF_GIVEN IF_NOT_GIVEN IF_ENABLED IF_DISABLED], [$@],
 [
-  if test "x[$]$1" = x; then
-    AC_MSG_ERROR([Could not find required tool for $1])
+  ##########################
+  # Part 1: Set up m4 macros
+  ##########################
+
+  # If DEFAULT is not specified, set it to 'true'.
+  m4_define([ARG_DEFAULT], m4_if(ARG_DEFAULT, , true, ARG_DEFAULT))
+
+  # If AVAILABLE is not specified, set it to 'true'.
+  m4_define([ARG_AVAILABLE], m4_if(ARG_AVAILABLE, , true, ARG_AVAILABLE))
+
+  # If DEFAULT_DESC is not specified, calculate it from DEFAULT.
+  m4_define([ARG_DEFAULT_DESC], m4_if(ARG_DEFAULT_DESC, , m4_if(ARG_DEFAULT, true, enabled, m4_if(ARG_DEFAULT, false, disabled, ARG_DEFAULT)), ARG_DEFAULT_DESC))
+
+  # If RESULT is not specified, set it to 'ARG_NAME[_ENABLED]'.
+  m4_define([ARG_RESULT], m4_if(ARG_RESULT, , m4_translit(ARG_NAME, [a-z-], [A-Z_])[_ENABLED], ARG_RESULT))
+  # Construct shell variable names for the option
+  m4_define(ARG_OPTION, [enable_]m4_translit(ARG_NAME, [-], [_]))
+  m4_define(ARG_GIVEN, m4_translit(ARG_NAME, [a-z-], [A-Z_])[_GIVEN])
+
+  # If DESC is not specified, set it to a generic description.
+  m4_define([ARG_DESC], m4_if(ARG_DESC, , [Enable the ARG_NAME feature], m4_normalize(ARG_DESC)))
+
+  # If CHECKING_MSG is not specified, set it to a generic description.
+  m4_define([ARG_CHECKING_MSG], m4_if(ARG_CHECKING_MSG, , [for --enable-ARG_NAME], ARG_CHECKING_MSG))
+
+  # If the code blocks are not given, set them to the empty statements to avoid
+  # tripping up bash.
+  m4_define([ARG_CHECK_AVAILABLE], m4_if(ARG_CHECK_AVAILABLE, , :, ARG_CHECK_AVAILABLE))
+  m4_define([ARG_IF_GIVEN], m4_if(ARG_IF_GIVEN, , :, ARG_IF_GIVEN))
+  m4_define([ARG_IF_NOT_GIVEN], m4_if(ARG_IF_NOT_GIVEN, , :, ARG_IF_NOT_GIVEN))
+  m4_define([ARG_IF_ENABLED], m4_if(ARG_IF_ENABLED, , :, ARG_IF_ENABLED))
+  m4_define([ARG_IF_DISABLED], m4_if(ARG_IF_DISABLED, , :, ARG_IF_DISABLED))
+
+  ##########################
+  # Part 2: Set up autoconf shell code
+  ##########################
+
+  # Check that DEFAULT has a valid value
+  if test "[x]ARG_DEFAULT" != xtrue && test "[x]ARG_DEFAULT" != xfalse && \
+      test "[x]ARG_DEFAULT" != xauto ; then
+    AC_MSG_ERROR([Internal error: Argument DEFAULT to [UTIL_ARG_ENABLE] can only be true, false or auto, was: 'ARG_DEFAULT'])
   fi
-])
 
-###############################################################################
-# Setup a tool for the given variable. If correctly specified by the user,
-# use that value, otherwise search for the tool using the supplied code snippet.
-# $1: variable to set
-# $2: code snippet to call to look for the tool
-# $3: code snippet to call if variable was used to find tool
-AC_DEFUN([UTIL_SETUP_TOOL],
-[
-  # Publish this variable in the help.
-  AC_ARG_VAR($1, [Override default value for $1])
+  # Check that AVAILABLE has a valid value
+  if test "[x]ARG_AVAILABLE" != xtrue && test "[x]ARG_AVAILABLE" != xfalse; then
+    AC_MSG_ERROR([Internal error: Argument AVAILABLE to [UTIL_ARG_ENABLE] can only be true or false, was: 'ARG_AVAILABLE'])
+  fi
 
-  if [[ -z "${$1+x}" ]]; then
-    # The variable is not set by user, try to locate tool using the code snippet
-    $2
+  AC_ARG_ENABLE(ARG_NAME, AS_HELP_STRING([--enable-]ARG_NAME,
+      [ARG_DESC [ARG_DEFAULT_DESC]]), [ARG_GIVEN=true], [ARG_GIVEN=false])
+
+  # Check if the option is available
+  AVAILABLE=ARG_AVAILABLE
+  # Run the available check block (if any), which can overwrite AVAILABLE.
+  ARG_CHECK_AVAILABLE
+
+  # Check if the option should be turned on
+  AC_MSG_CHECKING(ARG_CHECKING_MSG)
+  if test x$ARG_GIVEN = xfalse; then
+    if test ARG_DEFAULT = auto; then
+      # If not given, and default is auto, set it to true iff it's available.
+      ARG_RESULT=$AVAILABLE
+      REASON="from default 'auto'"
+    else
+      ARG_RESULT=ARG_DEFAULT
+      REASON="default"
+    fi
   else
-    # The variable is set, but is it from the command line or the environment?
-
-    # Try to remove the string !$1! from our list.
-    try_remove_var=${CONFIGURE_OVERRIDDEN_VARIABLES//!$1!/}
-    if test "x$try_remove_var" = "x$CONFIGURE_OVERRIDDEN_VARIABLES"; then
-      # If it failed, the variable was not from the command line. Ignore it,
-      # but warn the user (except for BASH, which is always set by the calling BASH).
-      if test "x$1" != xBASH; then
-        AC_MSG_WARN([Ignoring value of $1 from the environment. Use command line variables instead.])
-      fi
-      # Try to locate tool using the code snippet
-      $2
-    else
-      # If it succeeded, then it was overridden by the user. We will use it
-      # for the tool.
-
-      # First remove it from the list of overridden variables, so we can test
-      # for unknown variables in the end.
-      CONFIGURE_OVERRIDDEN_VARIABLES="$try_remove_var"
-
-      tool_override=[$]$1
-      AC_MSG_NOTICE([User supplied override $1="$tool_override"])
-
-      # Check if we try to supply an empty value
-      if test "x$tool_override" = x; then
-        AC_MSG_CHECKING([for $1])
-        AC_MSG_RESULT([disabled])
+    if test x$ARG_OPTION = xyes; then
+      ARG_RESULT=true
+      REASON="from command line"
+    elif test x$ARG_OPTION = xno; then
+      ARG_RESULT=false
+      REASON="from command line"
+    elif test x$ARG_OPTION = xauto; then
+      if test ARG_DEFAULT = auto; then
+        # If both given and default is auto, set it to true iff it's available.
+        ARG_RESULT=$AVAILABLE
       else
-        # Split up override in command part and argument part
-        tool_and_args=($tool_override)
-        [ tool_command=${tool_and_args[0]} ]
-        [ unset 'tool_and_args[0]' ]
-        [ tool_args=${tool_and_args[@]} ]
-
-        # Check if the provided tool contains a complete path.
-        tool_basename="${tool_command##*/}"
-        if test "x$tool_basename" = "x$tool_command"; then
-          # A command without a complete path is provided, search $PATH.
-          AC_MSG_NOTICE([Will search for user supplied tool "$tool_basename"])
-          AC_PATH_PROG($1, $tool_basename)
-          if test "x[$]$1" = x; then
-            AC_MSG_ERROR([User supplied tool $1="$tool_basename" could not be found])
-          fi
-        else
-          # Otherwise we believe it is a complete path. Use it as it is.
-          AC_MSG_NOTICE([Will use user supplied tool "$tool_command"])
-          AC_MSG_CHECKING([for $tool_command])
-          if test ! -x "$tool_command"; then
-            AC_MSG_RESULT([not found])
-            AC_MSG_ERROR([User supplied tool $1="$tool_command" does not exist or is not executable])
-          fi
-           $1="$tool_command"
-          AC_MSG_RESULT([found])
-        fi
-        if test "x$tool_args" != x; then
-          # If we got arguments, re-append them to the command after the fixup.
-          $1="[$]$1 $tool_args"
-        fi
+        ARG_RESULT=ARG_DEFAULT
       fi
-    fi
-    $3
-  fi
-])
-
-###############################################################################
-# Call UTIL_SETUP_TOOL with AC_PATH_PROGS to locate the tool
-# $1: variable to set
-# $2: executable name (or list of names) to look for
-# $3: [path]
-AC_DEFUN([UTIL_PATH_PROGS],
-[
-  UTIL_SETUP_TOOL($1, [AC_PATH_PROGS($1, $2, , $3)])
-])
-
-###############################################################################
-# Call UTIL_SETUP_TOOL with AC_CHECK_TOOLS to locate the tool
-# $1: variable to set
-# $2: executable name (or list of names) to look for
-AC_DEFUN([UTIL_CHECK_TOOLS],
-[
-  UTIL_SETUP_TOOL($1, [AC_CHECK_TOOLS($1, $2)])
-])
-
-###############################################################################
-# Like UTIL_PATH_PROGS but fails if no tool was found.
-# $1: variable to set
-# $2: executable name (or list of names) to look for
-# $3: [path]
-AC_DEFUN([UTIL_REQUIRE_PROGS],
-[
-  UTIL_PATH_PROGS($1, $2, , $3)
-  UTIL_CHECK_NONEMPTY($1)
-])
-
-###############################################################################
-# Like UTIL_SETUP_TOOL but fails if no tool was found.
-# $1: variable to set
-# $2: autoconf macro to call to look for the special tool
-AC_DEFUN([UTIL_REQUIRE_SPECIAL],
-[
-  UTIL_SETUP_TOOL($1, [$2])
-  UTIL_CHECK_NONEMPTY($1)
-])
-
-###############################################################################
-# Like UTIL_REQUIRE_PROGS but also allows for bash built-ins
-# $1: variable to set
-# $2: executable name (or list of names) to look for
-# $3: [path]
-AC_DEFUN([UTIL_REQUIRE_BUILTIN_PROGS],
-[
-  UTIL_SETUP_TOOL($1, [AC_PATH_PROGS($1, $2, , $3)])
-  if test "x[$]$1" = x; then
-    AC_MSG_NOTICE([Required tool $2 not found in PATH, checking built-in])
-    if help $2 > /dev/null 2>&1; then
-      AC_MSG_NOTICE([Found $2 as shell built-in. Using it])
-      $1="$2"
+      REASON="from command line 'auto'"
     else
-      AC_MSG_ERROR([Required tool $2 also not found as built-in.])
+      AC_MSG_ERROR([Option [--enable-]ARG_NAME can only be 'yes', 'no' or 'auto'])
     fi
   fi
-  UTIL_CHECK_NONEMPTY($1)
+
+  if test x$ARG_RESULT = xtrue; then
+    AC_MSG_RESULT([enabled, $REASON])
+    if test x$AVAILABLE = xfalse; then
+      AC_MSG_ERROR([Option [--enable-]ARG_NAME is not available])
+    fi
+  else
+    AC_MSG_RESULT([disabled, $REASON])
+  fi
+
+  # Execute result payloads, if present
+  if test x$ARG_GIVEN = xtrue; then
+    ARG_IF_GIVEN
+  else
+    ARG_IF_NOT_GIVEN
+  fi
+
+  if test x$ARG_RESULT = xtrue; then
+    ARG_IF_ENABLED
+  else
+    ARG_IF_DISABLED
+  fi
 ])
+
