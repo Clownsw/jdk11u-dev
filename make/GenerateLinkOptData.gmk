@@ -57,8 +57,6 @@ ifeq ($(EXTERNAL_BUILDJDK), true)
   INTERIM_IMAGE_DIR := $(BUILD_JDK)
 endif
 
-# Save the stderr output of the command and print it along with stdout in case
-# something goes wrong.
 $(CLASSLIST_FILE): $(INTERIM_IMAGE_DIR)/bin/java$(EXECUTABLE_SUFFIX) $(CLASSLIST_JAR)
 	$(call MakeDir, $(LINK_OPT_DIR))
 	$(call LogInfo, Generating $(patsubst $(OUTPUTDIR)/%, %, $@))

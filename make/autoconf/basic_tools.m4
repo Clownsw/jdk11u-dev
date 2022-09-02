@@ -353,7 +353,7 @@ AC_DEFUN_ONCE([BASIC_SETUP_COMPLEX_TOOLS],
   UTIL_LOOKUP_PROGS(STAT, stat)
   UTIL_LOOKUP_PROGS(TIME, time)
   UTIL_LOOKUP_PROGS(FLOCK, flock)
-  # Dtrace is usually found in /usr/sbin, but that directory may not
+  # Dtrace is usually found in /usr/sbin on Solaris, but that directory may not
   # be in the user path.
   UTIL_LOOKUP_PROGS(DTRACE, dtrace, $PATH:/usr/sbin)
   UTIL_LOOKUP_PROGS(PATCH, gpatch patch)

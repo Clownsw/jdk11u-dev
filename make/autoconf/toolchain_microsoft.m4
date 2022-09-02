@@ -447,71 +447,9 @@ AC_DEFUN([TOOLCHAIN_SETUP_VISUAL_STUDIO_ENV],
   # If we have a devkit, we don't need to run VS_ENV_CMD
   if test "x$DEVKIT_VS_VERSION" = x; then
     if test "x$VS_ENV_CMD" != x; then
-<<<<<<< HEAD:make/autoconf/toolchain_windows.m4
-      # We have found a Visual Studio environment on disk, let's extract variables from the vsvars bat file.
-      UTIL_FIXUP_EXECUTABLE(VS_ENV_CMD)
-
-      # Lets extract the variables that are set by vcvarsall.bat/vsvars32.bat/vsvars64.bat
-      AC_MSG_NOTICE([Trying to extract Visual Studio environment variables])
-
-      # We need to create a couple of temporary files.
-      VS_ENV_TMP_DIR="$CONFIGURESUPPORT_OUTPUTDIR/vs-env"
-      $MKDIR -p $VS_ENV_TMP_DIR
-
-      # Cannot use the VS10 setup script directly (since it only updates the DOS subshell environment).
-      # Instead create a shell script which will set the relevant variables when run.
-      WINPATH_VS_ENV_CMD="$VS_ENV_CMD"
-      UTIL_REWRITE_AS_WINDOWS_MIXED_PATH([WINPATH_VS_ENV_CMD])
-      WINPATH_BASH="$BASH"
-      UTIL_REWRITE_AS_WINDOWS_MIXED_PATH([WINPATH_BASH])
-
-      # Generate a DOS batch file which runs $VS_ENV_CMD, and then creates a shell
-      # script (executable by bash) that will setup the important variables.
-      EXTRACT_VC_ENV_BAT_FILE="$VS_ENV_TMP_DIR/extract-vs-env.bat"
-      $ECHO "@echo off" >  $EXTRACT_VC_ENV_BAT_FILE
-      # This will end up something like:
-      # call C:/progra~2/micros~2.0/vc/bin/amd64/vcvars64.bat
-      $ECHO "call $WINPATH_VS_ENV_CMD $VS_ENV_ARGS" >> $EXTRACT_VC_ENV_BAT_FILE
-      # In some cases, the VS_ENV_CMD will change directory, change back so
-      # the set-vs-env.sh ends up in the right place.
-      $ECHO 'cd %~dp0' >> $EXTRACT_VC_ENV_BAT_FILE
-      # These will end up something like:
-      # C:/CygWin/bin/bash -c 'echo VS_PATH=\"$PATH\" > localdevenv.sh
-      # The trailing space for everyone except PATH is no typo, but is needed due
-      # to trailing \ in the Windows paths. These will be stripped later.
-      $ECHO "$WINPATH_BASH -c 'echo VS_PATH="'\"$PATH\" > set-vs-env.sh' \
-          >> $EXTRACT_VC_ENV_BAT_FILE
-      $ECHO "$WINPATH_BASH -c 'echo VS_INCLUDE="'\"$INCLUDE\;$include \" >> set-vs-env.sh' \
-          >> $EXTRACT_VC_ENV_BAT_FILE
-      $ECHO "$WINPATH_BASH -c 'echo VS_LIB="'\"$LIB\;$lib \" >> set-vs-env.sh' \
-          >> $EXTRACT_VC_ENV_BAT_FILE
-      $ECHO "$WINPATH_BASH -c 'echo VCINSTALLDIR="'\"$VCINSTALLDIR \" >> set-vs-env.sh' \
-          >> $EXTRACT_VC_ENV_BAT_FILE
-      $ECHO "$WINPATH_BASH -c 'echo VCToolsRedistDir="'\"$VCToolsRedistDir \" >> set-vs-env.sh' \
-          >> $EXTRACT_VC_ENV_BAT_FILE
-      $ECHO "$WINPATH_BASH -c 'echo WindowsSdkDir="'\"$WindowsSdkDir \" >> set-vs-env.sh' \
-          >> $EXTRACT_VC_ENV_BAT_FILE
-      $ECHO "$WINPATH_BASH -c 'echo WINDOWSSDKDIR="'\"$WINDOWSSDKDIR \" >> set-vs-env.sh' \
-          >> $EXTRACT_VC_ENV_BAT_FILE
-
-      # Now execute the newly created bat file.
-      # The | cat is to stop SetEnv.Cmd to mess with system colors on msys.
-      # Change directory so we don't need to mess with Windows paths in redirects.
-      cd $VS_ENV_TMP_DIR
-      cmd /c extract-vs-env.bat | $CAT
-      cd $CONFIGURE_START_DIR
-
-      if test ! -s $VS_ENV_TMP_DIR/set-vs-env.sh; then
-        AC_MSG_NOTICE([Could not succesfully extract the envionment variables needed for the VS setup.])
-        AC_MSG_NOTICE([Try setting --with-tools-dir to the VC/bin directory within the VS installation])
-        AC_MSG_NOTICE([or run "bash.exe -l" from a VS command prompt and then run configure from there.])
-        AC_MSG_ERROR([Cannot continue])
-      fi
-=======
       # We have found a Visual Studio environment on disk, let's extract variables
       # from the vsvars bat file into shell variables in the configure script.
       TOOLCHAIN_EXTRACT_VISUAL_STUDIO_ENV($OPENJDK_TARGET_CPU)
->>>>>>> cafc444bfdd (Backport d29c78da19ba78214efe9e7856cde30fdd9ba8ab):make/autoconf/toolchain_microsoft.m4
 
       # Now we have VS_PATH, VS_INCLUDE, VS_LIB. For further checking, we
       # also define VCINSTALLDIR and WINDOWSSDKDIR. All are in

@@ -42,7 +42,7 @@ $(BUILD_INFO_PROPERTIES):
 
 prepare-test-image: $(BUILD_INFO_PROPERTIES)
 	$(call MakeDir, $(TEST_IMAGE_DIR))
-	$(ECHO) > $(TEST_IMAGE_DIR)/Readme.txt 'JDK tesUTIL_FIXUP_PATH_CYGWINt image'
+	$(ECHO) > $(TEST_IMAGE_DIR)/Readme.txt 'JDK test image'
 
 ################################################################################
 

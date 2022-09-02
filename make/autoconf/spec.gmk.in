@@ -132,10 +132,7 @@ LIBDL:=@LIBDL@
 WINENV_ROOT := @WINENV_ROOT@
 WINENV_PREFIX := @WINENV_PREFIX@
 
-ifneq ($(findstring windows.wsl, @OPENJDK_BUILD_OS_ENV@), )
-  # Tell WSL to convert PATH between linux and windows
-  export WSLENV := PATH/l
-else ifeq (@OPENJDK_BUILD_OS_ENV@, windows.msys2)
+ifeq (@OPENJDK_BUILD_OS_ENV@, windows.msys2)
   # Prohibit msys2 from attemping any path wrangling
   export MSYS2_ARG_CONV_EXCL := "*"
 endif
@@ -627,15 +624,25 @@ JAVADOC_CMD:=@JAVADOC@
 JAR_CMD:=@JAR@
 JLINK_CMD := @JLINK@
 JMOD_CMD := @JMOD@
+SJAVAC_SERVER_JAVA_CMD:=@SJAVAC_SERVER_JAVA@
 # These variables are meant to be used. They are defined with = instead of := to make
 # it possible to override only the *_CMD variables.
 JAVA = $(JAVA_CMD) $(JAVA_FLAGS_BIG) $(JAVA_FLAGS)
 JAVA_SMALL = $(JAVA_CMD) $(JAVA_FLAGS_SMALL) $(JAVA_FLAGS)
+JAVA_JAVAC = $(JAVA_CMD) $(JAVA_FLAGS_JAVAC) $(JAVA_FLAGS)
 JAVAC = $(JAVAC_CMD)
 JAVADOC = $(JAVADOC_CMD)
 JAR = $(JAR_CMD)
 JLINK = $(JLINK_CMD)
 JMOD = $(JMOD_CMD) $(JAVA_TOOL_FLAGS_SMALL)
+# A specific java binary with specific options can be used to run
+# the long running background sjavac servers and other long running tasks.
+SJAVAC_SERVER_JAVA = $(SJAVAC_SERVER_JAVA_CMD) \
+    $(SJAVAC_SERVER_JAVA_FLAGS)
+
+# Hotspot sets this variable before reading the SPEC when compiling sa-jdi.jar. Avoid
+# overriding that value by using ?=.
+JAVAC_FLAGS? = @JAVAC_FLAGS@
 
 BUILD_JAVA_FLAGS := @BOOTCYCLE_JVM_ARGS_BIG@
 BUILD_JAVA=@FIXPATH@ $(BUILD_JDK)/bin/java $(BUILD_JAVA_FLAGS)
@@ -755,13 +762,9 @@ JTREGEXE:=@JTREGEXE@
 JIB_HOME:=@JIB_HOME@
 XCODEBUILD=@XCODEBUILD@
 DTRACE := @DTRACE@
-<<<<<<< HEAD
-FIXPATH:=@FIXPATH@
-ULIMIT:=@ULIMIT@
-=======
 FIXPATH := @FIXPATH@
 FIXPATH_BASE := @FIXPATH_BASE@
->>>>>>> cafc444bfdd (Backport d29c78da19ba78214efe9e7856cde30fdd9ba8ab)
+ULIMIT:=@ULIMIT@
 
 TAR_TYPE:=@TAR_TYPE@
 TAR_CREATE_EXTRA_PARAM:=@TAR_CREATE_EXTRA_PARAM@

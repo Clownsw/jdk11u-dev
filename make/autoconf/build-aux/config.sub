@@ -40,7 +40,7 @@ if echo $* | grep pc-msys >/dev/null ; then
     exit
 fi
 
-# Filter out everything that doesn't begin with "aarch64-"
+# First, filter out everything that doesn't begin with "aarch64-"
 if ! echo $* | grep '^aarch64-' >/dev/null ; then
     . $DIR/autoconf-config.sub "$@"
     # autoconf-config.sub exits, so we never reach here, but just in

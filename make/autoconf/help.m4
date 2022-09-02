@@ -25,7 +25,7 @@
 
 AC_DEFUN_ONCE([HELP_SETUP_DEPENDENCY_HELP],
 [
-  UTIL_LOOKUP_PROGS(PKGHANDLER, zypper apt-get yum brew port pkgutil pkgadd pacman apk)
+  UTIL_LOOKUP_PROGS(PKGHANDLER, apt-get yum brew port pkgutil pkgadd pacman apk)
 ])
 
 AC_DEFUN([HELP_MSG_MISSING_DEPENDENCY],
@@ -52,8 +52,6 @@ AC_DEFUN([HELP_MSG_MISSING_DEPENDENCY],
         pkgutil_help $MISSING_DEPENDENCY ;;
       pkgadd)
         pkgadd_help  $MISSING_DEPENDENCY ;;
-      zypper)
-        zypper_help  $MISSING_DEPENDENCY ;;
       pacman)
         pacman_help  $MISSING_DEPENDENCY ;;
       apk)

@@ -951,12 +951,41 @@ ShellQuote = \
 # list.
 # This is normally not needed since we use the FIXPATH prefix for command lines,
 # but might be needed in certain circumstances.
-ifeq ($(call isTargetOs, windows), true)
+ifeq ($(OPENJDK_TARGET_OS), windows)
   FixPath = \
     $(strip $(subst \,\\, $(shell $(FIXPATH_BASE) print $(patsubst $(FIXPATH), , $1))))
 else
   FixPath = \
       $1
+endif
+
+################################################################################
+# Write to and read from file
+
+# Param 1 - File to read
+ReadFile = \
+    $(shell $(CAT) $1)
+
+# Param 1 - Text to write
+# Param 2 - File to write to
+ifeq ($(HAS_FILE_FUNCTION), true)
+  WriteFile = \
+      $(file >$2,$(strip $1))
+else
+  # Use printf to get consistent behavior on all platforms.
+  WriteFile = \
+      $(shell $(PRINTF) "%s" $(call ShellQuote, $1) > $2)
+endif
+
+# Param 1 - Text to write
+# Param 2 - File to write to
+ifeq ($(HAS_FILE_FUNCTION), true)
+  AppendFile = \
+      $(file >>$2,$(strip $1))
+else
+  # Use printf to get consistent behavior on all platforms.
+  AppendFile = \
+      $(shell $(PRINTF) "%s" $(call ShellQuote, $1) >> $2)
 endif
 
 ################################################################################
