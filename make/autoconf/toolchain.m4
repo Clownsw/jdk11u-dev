@@ -604,9 +604,7 @@ AC_DEFUN([TOOLCHAIN_EXTRACT_LD_VERSION],
     #   GNU ld (GNU Binutils for Ubuntu) 2.26.1
     #   Copyright (C) 2015 Free Software Foundation, Inc.
     #   This program is free software; [...]
-    # If using gold it will look like:
-    #   GNU gold (GNU Binutils 2.30) 1.15
-    LINKER_VERSION_STRING=`$LINKER -Wl,--version 2> /dev/null | $HEAD -n 1`
+    LINKER_VERSION_STRING=`$LINKER -Wl,--version 2>&1 | $HEAD -n 1`
     # Extract version number
     [ LINKER_VERSION_NUMBER=`$ECHO $LINKER_VERSION_STRING | \
         $SED -e 's/.* \([0-9][0-9]*\(\.[0-9][0-9]*\)*\).*/\1/'` ]
@@ -776,7 +774,11 @@ AC_DEFUN_ONCE([TOOLCHAIN_DETECT_TOOLCHAIN_EXTRA],
     UTIL_LOOKUP_TOOLCHAIN_PROGS(DUMPBIN, dumpbin)
   fi
 
-  if test "x$OPENJDK_TARGET_OS" != xwindows; then
+  if test "x$OPENJDK_TARGET_OS" = xsolaris; then
+    UTIL_LOOKUP_PROGS(STRIP, strip)
+    UTIL_LOOKUP_PROGS(NM, nm)
+    UTIL_LOOKUP_PROGS(GNM, gnm)
+  elif test "x$OPENJDK_TARGET_OS" != xwindows; then
     UTIL_LOOKUP_TOOLCHAIN_PROGS(STRIP, strip)
     if test "x$TOOLCHAIN_TYPE" = xgcc; then
       UTIL_LOOKUP_TOOLCHAIN_PROGS(NM, nm gcc-nm)

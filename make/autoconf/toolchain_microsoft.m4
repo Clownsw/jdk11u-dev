@@ -148,7 +148,7 @@ AC_DEFUN([TOOLCHAIN_CHECK_POSSIBLE_VISUAL_STUDIO_ROOT],
         VCVARSFILES="vc/bin/vcvars32.bat vc/auxiliary/build/vcvars32.bat"
       elif test "x$TARGET_CPU" = xx86_64; then
         VCVARSFILES="vc/bin/amd64/vcvars64.bat vc/bin/x86_amd64/vcvarsx86_amd64.bat \
-            vc/auxiliary/build/vcvarsx86_amd64.bat vc/auxiliary/build/vcvars64.bat"
+            /vcvarsx86_amd64.bat /vcvars64.bat"
       elif test "x$TARGET_CPU" = xaarch64; then
         # for host x86-64, target aarch64
         VCVARSFILES="vc/auxiliary/build/vcvarsamd64_arm64.bat \
@@ -665,7 +665,7 @@ AC_DEFUN([TOOLCHAIN_SETUP_VS_RUNTIME_DLLS],
   fi
 
   AC_ARG_WITH(vcruntime-1-dll, [AS_HELP_STRING([--with-vcruntime-1-dll],
-      [path to microsoft C++ runtime dll (vcruntime*_1.dll) (Windows only) @<:@probed@:>@])])
+      [path to microsoft C++ runtime dll (vcruntime*_1.dll) (Windows x64 only) @<:@probed@:>@])])
 
   if test "x$VCRUNTIME_1_NAME" != "x" && test "x$OPENJDK_TARGET_CPU" = xx86_64; then
     if test "x$with_vcruntime_1_dll" != x; then
@@ -686,8 +686,8 @@ AC_DEFUN([TOOLCHAIN_SETUP_VS_RUNTIME_DLLS],
       TOOLCHAIN_SETUP_MSVC_DLL([${VCRUNTIME_1_NAME}])
       VCRUNTIME_1_DLL="$MSVC_DLL"
     fi
-    AC_SUBST(VCRUNTIME_1_DLL)
   fi
+  AC_SUBST(VCRUNTIME_1_DLL)
 
   AC_ARG_WITH(ucrt-dll-dir, [AS_HELP_STRING([--with-ucrt-dll-dir],
       [path to Microsoft Windows Kit UCRT DLL dir (Windows only) @<:@probed@:>@])])

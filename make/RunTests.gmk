@@ -67,6 +67,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
         $(addprefix $(SYMBOLS_IMAGE_DIR)/bin/, *.pdb */*.pdb))))))
     export _NT_SYMBOL_PATH := $(subst \\,\, $(call FixPath, \
         $(subst $(DQUOTE),, $(SYMBOL_PATH))))
+    $(info _NT_SYMBOL_PATH=$(_NT_SYMBOL_PATH))
   endif
 endif
 
