@@ -47,7 +47,7 @@ endif
 # creating a buildjdk. If we are, the provided runtime librareis are made for
 # the target platform, not the build platform (and we should not need to bundle
 # anything with the minimalistic, locally-only buildjdk.)
-ifeq ($(call isTargetOs, windows)+$(CREATING_BUILDJDK), true+false)
+ifeq ($(OPENJDK_TARGET_OS), windows)+$(CREATING_BUILDJDK)
 
   # Chmod to avoid permission issues if bundles are unpacked on unix platforms.
   define copy-and-chmod

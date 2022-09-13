@@ -73,10 +73,10 @@ define WriteCompileCommandsFragment
   $(call LogInfo, Creating compile commands fragment for $(notdir $3))
   $(call MakeDir, $(dir $1))
   $(call WriteFile,{ \
-      "directory": "$(strip $(call FixPath, $2))"$(COMMA) \
-      "file": "$(strip $(call FixPath, $3))"$(COMMA) \
+      "directory": "$(strip $2)"$(COMMA) \
+      "file": "$(strip $3)"$(COMMA) \
       "command": "$(strip $(subst $(DQUOTE),\$(DQUOTE),$(subst \,\\,\
-        $(subst $(FIXPATH),,$(call FixPath, $4)))))" \
+        $(subst $(FIXPATH),,$4))))"$(COMMA) \
       "output": "$(strip $5)" \
     }$(COMMA), \
     $1)
@@ -1190,9 +1190,6 @@ define SetupNativeCompilationBody
 		          test "$$$$?" = "1" ; \
 		  $$($1_CREATE_DEBUGINFO_CMDS)
 		  $$($1_STRIP_CMD)
-                 ifeq ($(call isBuildOsEnv, windows.wsl2), true)
-		    $$(CHMOD) +x $$($1_TARGET)
-                 endif
                 else
 		  $$(call ExecuteWithLog, $$($1_OBJECT_DIR)/$$($1_SAFE_NAME)_link, \
 		      $$(if $$($1_LINK_OBJS_RELATIVE), $$(CD) $$(OUTPUTDIR) ; ) \
